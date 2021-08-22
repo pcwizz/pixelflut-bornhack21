@@ -82,15 +82,19 @@ fn main() {
             .to_vec(),
     ]
     .concat();*/
+    let mut packets: Vec<Vec<u8>> = vec![];
+    let chunk_iter = flat_frame.chunks(160);
+    for chunk in chunk_iter {
+        let data = chunk
+            .iter()
+            .map(|p| p.pack())
+            .collect::<Vec<Vec<u8>>>()
+            .concat();
+        packets.push([header.pack().to_vec(), data].concat());
+    }
+
     loop {
-        let chunk_iter = flat_frame.chunks(160);
-        for chunk in chunk_iter {
-            let data = chunk
-                .iter()
-                .map(|p| p.pack())
-                .collect::<Vec<Vec<u8>>>()
-                .concat();
-            let packet = [header.pack().to_vec(), data].concat();
+        for packet in packets.clone() {
             socket
                 .send_to(packet.as_slice(), "[2001:678:9ec:3000::1]:5005")
                 .expect("couldn't send data");
